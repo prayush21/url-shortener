@@ -1,0 +1,72 @@
+name: Deploy to Google Cloud Run
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SA_EMAIL }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Authorize Docker push
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Backend
+        run: |
+          docker build -t gcr.io/$PROJECT_ID/urlshortener-backend .
+          docker push gcr.io/$PROJECT_ID/urlshortener-backend
+
+      - name: Build and Push Frontend
+        run: |
+          docker build -t gcr.io/$PROJECT_ID/urlshortener-frontend ./web
+          docker push gcr.io/$PROJECT_ID/urlshortener-frontend
+
+      - name: Deploy Backend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: urlshortener-backend
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/urlshortener-backend
+          env_vars: |
+            REDIS_ADDR=${{ secrets.REDIS_ADDR }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            REDIS_DB=0
+            SERVER_PORT=8080
+            BASE_URL=${{ secrets.BACKEND_URL }}
+          memory: 256Mi
+          cpu: 1
+          max_instances: 2
+          port: 8080
+
+      - name: Deploy Frontend to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: urlshortener-frontend
+          region: ${{ env.REGION }}
+          image: gcr.io/${{ env.PROJECT_ID }}/urlshortener-frontend
+          env_vars: |
+            VITE_API_BASE_URL=${{ secrets.BACKEND_URL }}
+          memory: 256Mi
+          cpu: 1
+          max_instances: 2
+          port: 80

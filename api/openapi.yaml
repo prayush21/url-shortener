@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: URL Shortener API
+  description: API for creating, resolving, and managing shortened URLs
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: API v1 endpoint
+paths:
+  /urls:
+    post:
+      summary: Create a shortened URL
+      description: Creates a new shortened URL from a provided long URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: The long URL to be shortened
+      responses:
+        "201":
+          description: URL successfully shortened
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  key:
+                    type: string
+                    description: The unique key for the shortened URL
+                  url:
+                    type: string
+                    format: uri
+                    description: The original long URL
+                  short_url:
+                    type: string
+                    format: uri
+                    description: The complete shortened URL
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
+  /urls/{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique key of the shortened URL
+    delete:
+      summary: Delete a shortened URL
+      description: Removes a shortened URL mapping
+      responses:
+        "200":
+          description: URL mapping successfully deleted
+        "204":
+          description: URL mapping not found
+  /{key}:
+    parameters:
+      - name: key
+        in: path
+        required: true
+        schema:
+          type: string
+        description: The unique key of the shortened URL
+    get:
+      summary: Resolve and redirect to the original URL
+      description: Redirects to the original URL associated with the given key
+      responses:
+        "302":
+          description: Redirect to the original URL
+          headers:
+            Location:
+              schema:
+                type: string
+                format: uri
+              description: The original URL to redirect to
+        "404":
+          description: URL mapping not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message
