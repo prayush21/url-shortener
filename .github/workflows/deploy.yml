@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: us-central1
@@ -12,14 +16,12 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Google Auth
+      - id: auth
+        name: Authenticate with Google Cloud
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
@@ -53,10 +55,6 @@ jobs:
             REDIS_DB=0
             SERVER_PORT=8080
             BASE_URL=${{ secrets.BACKEND_URL }}
-          memory: 256Mi
-          cpu: 1
-          max_instances: 2
-          port: 8080
 
       - name: Deploy Frontend to Cloud Run
         uses: google-github-actions/deploy-cloudrun@v2
@@ -66,7 +64,3 @@ jobs:
           image: gcr.io/${{ env.PROJECT_ID }}/urlshortener-frontend
           env_vars: |
             VITE_API_BASE_URL=${{ secrets.BACKEND_URL }}
-          memory: 256Mi
-          cpu: 1
-          max_instances: 2
-          port: 80
