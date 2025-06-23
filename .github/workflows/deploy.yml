@@ -16,6 +16,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: production
 
     steps:
       - uses: actions/checkout@v4
@@ -31,10 +32,8 @@ jobs:
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SA_EMAIL }}
-          token_format: "access_token"
-          audience: "https://iam.googleapis.com"
           create_credentials_file: true
-          cleanup_credentials: true
+          token_format: "access_token"
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
