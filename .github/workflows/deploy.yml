@@ -24,7 +24,7 @@ jobs:
       # Debug step to see GitHub token claims
       - name: Debug OIDC Claims
         run: |
-          curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://iam.googleapis.com/projects/940028581563/locations/global/workloadIdentityPools/gh-actions-pool-1/providers/gh-provider" | jq .
+          curl -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=https://iam.googleapis.com" | jq .
 
       - id: auth
         name: Authenticate with Google Cloud
@@ -34,7 +34,7 @@ jobs:
           service_account: ${{ secrets.GCP_SA_EMAIL }}
           create_credentials_file: true
           token_format: "access_token"
-          audience: "https://iam.googleapis.com/projects/940028581563/locations/global/workloadIdentityPools/gh-actions-pool-1/providers/gh-provider"
+          audience: "https://iam.googleapis.com"
 
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
